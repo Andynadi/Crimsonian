@@ -1,0 +1,136 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+header h1 {
+    color: #c41e3a;  /* Harvard Crimson */
+    margin-bottom: 10px;
+}
+
+.availability-form {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.btn {
+    background: #f0f0f0;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn:hover {
+    background: #e0e0e0;
+}
+
+.btn.primary {
+    background: #c41e3a;
+    color: white;
+}
+
+.btn.primary:hover {
+    background: #a01830;
+}
+
+.slots-section {
+    margin: 20px 0;
+}
+
+#slots-list {
+    list-style: none;
+}
+
+#slots-list li {
+    background: #f8f8f8;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#slots-list button {
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+h2, h3 {
+    margin-bottom: 20px;
+}
+
+h3 {
+    margin-top: 1.5rem;     /* Add space above */
+    margin-bottom: 0.8rem; /* Reduce space below */
+}
+
+.text-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-center {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+footer {
+    padding: 20px 0;
+}
+
+h4 {
+    margin-bottom: 1.5rem;
+}
+
+.about-heading {
+    margin-top: 3rem;    /* Add space above */
+    margin-bottom: 1rem; /* Reduce space below */
+}

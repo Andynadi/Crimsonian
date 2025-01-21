@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - Crimson Meet</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <style>
+        .admin-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .submissions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .submissions-table th,
+        .submissions-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .submissions-table th {
+            background-color: #c41e3a;
+            color: white;
+        }
+
+        .submissions-table tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+
+        .no-submissions {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .refresh-btn {
+            background: #c41e3a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: #a01830;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Crimson Meet - Admin Dashboard</h1>
+        <button class="refresh-btn" onclick="location.reload()">Refresh Submissions</button>
+
+        {% if submissions and submissions.length > 0 %}
+            <table class="submissions-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Date</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Submitted At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for submission in submissions %}
+                        <tr>
+                            <td>{{ submission.email }}</td>
+                            <td>{{ submission.date }}</td>
+                            <td>{{ submission.start_time }}</td>
+                            <td>{{ submission.end_time }}</td>
+                            <td>{{ submission.created_at }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-submissions">
+                <h2>No submissions yet</h2>
+                <p>When users submit their availability, it will appear here.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
