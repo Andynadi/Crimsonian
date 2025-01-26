@@ -15,6 +15,7 @@ db.serialize(() => {
         date TEXT NOT NULL,
         start_time TEXT NOT NULL,
         end_time TEXT NOT NULL,
+        locations TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 });
@@ -51,7 +52,9 @@ app.get('/admin', (req, res) => {
 
 app.post('/api/submit-availability', (req, res) => {
     const { email, slots } = req.body;
-    
+
+    console.log('Request Body:', req.body); // Debugging line
+
     if (!email || !slots || !Array.isArray(slots) || slots.length === 0) {
         return res.status(400).json({
             success: false,
@@ -60,17 +63,17 @@ app.post('/api/submit-availability', (req, res) => {
     }
 
     const stmt = db.prepare(`
-        INSERT INTO availability (email, date, start_time, end_time)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO availability (email, date, start_time, end_time, locations)
+        VALUES (?, ?, ?, ?, ?)
     `);
 
     try {
         db.serialize(() => {
             slots.forEach(slot => {
-                stmt.run(email, slot.date, slot.startTime, slot.endTime);
+                stmt.run(email, slot.date, slot.startTime, slot.endTime, slot.locations);
             });
             stmt.finalize();
-            
+
             res.json({
                 success: true,
                 message: 'Availability submitted successfully'
@@ -83,6 +86,20 @@ app.post('/api/submit-availability', (req, res) => {
             message: 'Error storing availability'
         });
     }
+});
+
+// Route to delete an entry by ID
+app.delete('/api/delete-entry/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.run(`DELETE FROM availability WHERE id = ?`, [id], function(err) {
+        if (err) {
+            console.error('Error deleting entry:', err);
+            return res.status(500).json({ success: false, message: 'Failed to delete entry' });
+        }
+        
+        res.json({ success: true, message: 'Entry deleted successfully' });
+    });
 });
 
 // Start server

@@ -62,6 +62,8 @@
         <h1>Crimson Meet - Admin Dashboard</h1>
         <button class="refresh-btn" onclick="location.reload()">Refresh Submissions</button>
 
+        <script src="/scripts/admin.js"></script>
+
         {% if submissions and submissions.length > 0 %}
             <table class="submissions-table">
                 <thead>
@@ -70,18 +72,26 @@
                         <th>Date</th>
                         <th>Start Time</th>
                         <th>End Time</th>
+                        <th>Locations</th> <!-- New column -->
+                        <th>Meeting Preference</th> <!-- New column -->
                         <th>Submitted At</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for submission in submissions %}
-                        <tr>
-                            <td>{{ submission.email }}</td>
-                            <td>{{ submission.date }}</td>
-                            <td>{{ submission.start_time }}</td>
-                            <td>{{ submission.end_time }}</td>
-                            <td>{{ submission.created_at }}</td>
-                        </tr>
+                    <tr>
+                        <td>{{ submission.email }}</td>
+                        <td>{{ submission.date }}</td>
+                        <td>{{ submission.start_time }}</td>
+                        <td>{{ submission.end_time }}</td>
+                        <td>{{ submission.locations }}</td> <!-- Display locations -->
+                        <td>{{ submission.meeting_preference }}</td> <!-- Display meeting preference -->
+                        <td>{{ submission.created_at }}</td>
+                        <td>
+                            <button class="delete-btn" data-id="{{ submission.id }}">Delete</button>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>

@@ -12,7 +12,7 @@
         </header>
 
         <div class="availability-form">
-            <h4>Select Your Availability (please use your Harvard email & add at least 3 date/time slots)</h4>
+            <h4>Select Your Availability (please use your university email & add at least 3 time slots)</h4>
             
             <div class="input-group">
                 <label for="email">Email:</label>
@@ -23,6 +23,7 @@
                 <label for="date">Date:</label>
                 <input type="date" id="date" required>
             </div>
+            
 
             <div class="input-group">
                 <label for="start-time">Start Time:</label>
@@ -33,7 +34,15 @@
                 <label for="end-time">End Time:</label>
                 <input type="time" id="end-time" required>
             </div>
-
+            <div class="input-group">
+                <label for="locations">Location:</label>
+                <select id="locations" multiple>
+                    <option value="HKS Cafeteria">HKS Cafeteria</option>
+                    <option value="Around Harvard Square (TBD later)">Around Harvard Square (TBD later)</option>
+                    <option value="Ok with both">Both ok</option>
+                </select>
+            </div>
+                            
             <button id="add-slot" class="btn">Add Time Slot</button>
 
             <div class="slots-section">
@@ -47,27 +56,21 @@
     <script src="/scripts/availability.js"></script>
 
     <header>
-    
         <div class="text-container"> 
-            <h4 class="text-left">Meetup Location (default): Kennedy School Student Lounge.</h4>
-            <h3 class="text-left">How it works</h3> 
+        
             <p class="text-left"> Based on your availability, we will pair you with 1–3 other Harvard students and connect you through your Harvard email. If default meetup time and location is no longer suitable, it can be adjusted via email communication among the small group members.</p>
             <h3 class="text-left">Data and Privacy</h3>
             <p class="text-left">We collect only the essential information required for pairing students into small groups. We do not share your information with anyone outside of the Crimson Meet team.</p>
-
             <h3 class="text-left about-heading">About Us</h3>
-            <p class="text-left"> Andy Nadiradze (Founder)  Livia Rado (Advisor)  Memunatu Koroma (Advisor)</p>
-             
-            
+            <p class="text-left"> Andy Nadiradze (Founder & Executive Officer)  Livia Rado  Memunatu Koroma </p>
             <p class="text-left">Crimson Meet is a student-led initiative. The inspiration for creating the platform stemmed from MLD-304: Science of Behavior Change. The initial version of the platform was developed as part of DPI-691M: Programming and Data for Policymakers.</p>
-            <p class="text-left">Special thanks to Prof. Dhrumil Mehta, Prof. Aarushi Sahejpal, Prof. Todd Rogers and James Kane for their guidance and support.</p>
-
+            <p class="text-left">Special thanks to Prof. Dhrumil Mehta, Prof. Aarushi Sahejpal for their guidance and immense support as well as to Prof. Todd Rogers and James Kane for their help.</p>
             <h3 class="text-left">Contact Us</h3>
             <p class="text-left">anadiradze@hks.harvard.edu</p>
         </div>
-</header>
+    </header>
 
-<footer class="text-center">
+    <footer class="text-center">
         <p class="text-center">&copy; 2021 Crimson Meet</p>
     </footer>
 </body>
