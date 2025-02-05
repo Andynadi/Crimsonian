@@ -1,1 +1,6 @@
 availability.db
+# Ignore environment files
+.env
+
+# Ignore node_modules (including dotenv package)
+node_modules/

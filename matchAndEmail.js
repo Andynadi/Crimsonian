@@ -1,149 +1,156 @@
+require('dotenv').config();
 const sqlite3 = require('sqlite3').verbose();
 const nodemailer = require('nodemailer');
 const db = new sqlite3.Database('availability.db');
 
 // Configure Nodemailer
 const transporter = nodemailer.createTransport({
-    host: 'mail.privateemail.com', // Namecheap's SMTP server
-    port: 465, // Use port 465 for STARTTLS
-    secure: true, // Use STARTTLS
+    host: process.env.SMTP_HOST,
+    port: 465,
+    secure: true,
     auth: {
-    user: 'hello@crimsonmeet.com', // Your email
-    pass: 'A1n2d3r4i5' // Your generated app password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
     }
-    });
-    
+});
+
 // Helper function to send email
-function sendEmail(emails, date, time, locations) {
-    if (!emails || emails.length === 0) {
-        console.error('No recipients defined. Skipping email.');
+async function sendEmail(emails, date, time, locations) {
+    const validEmails = emails.filter(email => email.includes('@'));
+
+    if (validEmails.length === 0) {
+        console.error('No valid recipients found. Skipping email.');
         return;
     }
 
     const mailOptions = {
-        from: 'hello@crimsonmeet.com',
-        to: emails.join(', '), // Join emails array into a comma-separated string
+        from: process.env.EMAIL_USER,
+        to: validEmails.join(', '),
         subject: 'You’ve been matched for a meetup!',
-        text: `Hi there! You've been matched for a meetup on ${date} from ${time}, location: ${locations}.
-        Please connect via email to finalize your plans.`
+        html: `
+            <h2>Exciting news! You've been matched for a meetup!</h2>
+            <p><strong>Date:</strong> ${date}</p>
+            <p><strong>Time:</strong> ${time}</p>
+            <p><strong>Location:</strong> ${locations}</p>
+            <p>Please connect via email to finalize your plans.</p>
+            <p>Best regards,<br>CrimsonMeet Team</p>
+        `
     };
 
-    transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-            console.error('Error sending email:', err);
-        } else {
-            console.log('Email sent successfully:', info.response);
-        }
-    });
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Email sent successfully:', info.response);
+    } catch (err) {
+        console.error('❌ Error sending email:', err);
+    }
 }
 
-// Match users
-function matchUsers() {
-    console.log('System Time (UTC):', new Date().toISOString());
+// Helper function to calculate time overlap in hours
+function calculateOverlap(start1, end1, start2, end2) {
+    const overlapStart = Math.max(new Date(`1970-01-01T${start1}Z`), new Date(`1970-01-01T${start2}Z`));
+    const overlapEnd = Math.min(new Date(`1970-01-01T${end1}Z`), new Date(`1970-01-01T${end2}Z`));
+    return Math.max(0, (overlapEnd - overlapStart) / (1000 * 60 * 60));
+}
 
-    // Remove `created_at` filter for testing
-    const query = `
-        SELECT * FROM availability
-        ORDER BY date, start_time, locations
-    `;
+// Function to determine location compatibility
+function areLocationsCompatible(loc1, loc2) {
+    return loc1 === loc2 || loc1 === 'Ok with both' || loc2 === 'Ok with both';
+}
 
-    console.log('Executing Query:', query);
+// Match users, prioritizing groups of 4 → 3 → pairs
+async function matchUsers() {
+    console.log('🚀 Starting matching process:', new Date().toISOString());
 
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('Database error:', err);
-            return;
-        }
-
-        console.log('Rows fetched from availability:', rows);
-
-        if (rows.length === 0) {
-            console.log('No rows found. Exiting matching process.');
-            return;
-        }
-
-        const availabilitiesByUser = {};
-        rows.forEach(row => {
-            if (!availabilitiesByUser[row.email]) {
-                availabilitiesByUser[row.email] = [];
-            }
-            availabilitiesByUser[row.email].push(row);
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT * FROM availability 
+                WHERE matched = 0 AND date >= date('now') 
+                ORDER BY date, start_time
+            `, [], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
         });
+
+        if (!rows.length) {
+            console.log('ℹ️ No unmatched availability found.');
+            return;
+        }
 
         const groupedMatches = [];
         const usedEmails = new Set();
+        const matchedOnce = new Set(); // Track users who selected "one" preference
 
-        // Helper function to calculate overlap duration (in hours)
-        function calculateOverlap(start1, end1, start2, end2) {
-            const overlapStart = Math.max(new Date(`1970-01-01T${start1}Z`), new Date(`1970-01-01T${start2}Z`));
-            const overlapEnd = Math.min(new Date(`1970-01-01T${end1}Z`), new Date(`1970-01-01T${end2}Z`));
-            const overlapDuration = (overlapEnd - overlapStart) / (1000 * 60 * 60);
-            return Math.max(0, overlapDuration); // Return 0 if no overlap
+        for (const groupSize of [4, 3, 2]) {
+            const availableUsers = rows.filter(user => 
+                !usedEmails.has(user.email) && 
+                (!matchedOnce.has(user.email) || user.matching_preference === 'all') // Allow "one" preference only once
+            );
+
+            for (const anchor of availableUsers) {
+                if (usedEmails.has(anchor.email)) continue;
+
+                const potentialMatches = availableUsers.filter(other =>
+                    !usedEmails.has(other.email) &&
+                    other.email !== anchor.email &&
+                    other.date === anchor.date &&
+                    calculateOverlap(anchor.start_time, anchor.end_time, other.start_time, other.end_time) >= 1 &&
+                    areLocationsCompatible(anchor.locations, other.locations)
+                );
+
+                if (potentialMatches.length >= groupSize - 1) {
+                    const selectedMembers = potentialMatches.slice(0, groupSize - 1).concat(anchor);
+                    const groupId = Date.now();
+
+                    groupedMatches.push({ groupId, group: selectedMembers });
+                    selectedMembers.forEach(member => usedEmails.add(member.email));
+
+                    // If user selected "one", prevent them from further matching
+                    selectedMembers.forEach(member => {
+                        if (member.matching_preference === "one") {
+                            matchedOnce.add(member.email);
+                        }
+                    });
+                }
+            }
         }
 
-        // Try to form groups of 3 or 4
-        Object.values(availabilitiesByUser).forEach(userAvailabilities => {
-            if (usedEmails.has(userAvailabilities[0].email)) return;
+        if (!groupedMatches.length) {
+            console.log('❌ No viable matches found.');
+            return;
+        }
 
-            const bestSlot = userAvailabilities.find(slot => {
-                const potentialMatches = rows.filter(other => {
-                    return (
-                        other.email !== slot.email &&
-                        !usedEmails.has(other.email) &&
-                        other.date === slot.date &&
-                        calculateOverlap(slot.start_time, slot.end_time, other.start_time, other.end_time) >= 1 &&
-                        (
-                            other.locations === slot.locations ||
-                            slot.locations === 'Ok with both' ||
-                            other.locations === 'Ok with both'
-                        )
-                    );
+        // Process and update the database
+        for (const { groupId, group } of groupedMatches) {
+            console.log(`✅ Group ${groupId} matched:`, group.map(g => g.email).join(', '));
+
+            await new Promise((resolve, reject) => {
+                db.serialize(() => {
+                    db.run('BEGIN TRANSACTION');
+
+                    group.forEach(member => {
+                        db.run(`
+                            INSERT INTO matches (group_id, email, date, start_time, end_time, locations)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        `, [groupId, member.email, member.date, member.start_time, member.end_time, member.locations]);
+
+                        db.run(`UPDATE availability SET matched = 1 WHERE id = ?`, [member.id]);
+                    });
+
+                    db.run('COMMIT', err => (err ? reject(err) : resolve()));
                 });
-
-                return potentialMatches.length >= 2;
             });
 
-            if (!bestSlot) return;
+            // Send email to matched users
+            const emails = group.map(g => g.email);
+            await sendEmail(emails, group[0].date, `${group[0].start_time} - ${group[0].end_time}`, group[0].locations);
+        }
 
-            const potentialMatches = rows.filter(other => {
-                return (
-                    other.email !== bestSlot.email &&
-                    !usedEmails.has(other.email) &&
-                    other.date === bestSlot.date &&
-                    calculateOverlap(bestSlot.start_time, bestSlot.end_time, other.start_time, other.end_time) >= 1 &&
-                    (
-                        other.locations === bestSlot.locations ||
-                        bestSlot.locations === 'Ok with both' ||
-                        other.locations === 'Ok with both'
-                    )
-                );
-            });
-
-            if (potentialMatches.length >= 2) {
-                const group = [bestSlot, ...potentialMatches.slice(0, 3)];
-                const groupId = Date.now();
-                groupedMatches.push({ groupId, group });
-
-                group.forEach(member => usedEmails.add(member.email));
-            }
-        });
-
-        groupedMatches.forEach(({ groupId, group }) => {
-            console.log(`Group ID: ${groupId}, Matched Users: ${group.map(g => g.email).join(', ')}`);
-            group.forEach(member => {
-                db.run(`
-                    INSERT INTO matches (group_id, email, date, start_time, end_time, locations)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                `, [groupId, member.email, member.date, member.start_time, member.end_time, member.locations]);
-
-                const emails = group.map(g => g.email);
-                sendEmail(emails, group[0].date, `${group[0].start_time} - ${group[0].end_time}`, group[0].locations);
-            });
-        });
-
-        console.log('Matching process completed.');
-    });
+        console.log(`🎉 Matching process completed. Created ${groupedMatches.length} group(s).`);
+    } catch (error) {
+        console.error('❌ Error in matching process:', error);
+    }
 }
 
-// Run the matching script
 matchUsers();
