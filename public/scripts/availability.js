@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const emailError = document.getElementById('email-error');
     const startTimeInput = document.getElementById('start-time');
     const endTimeInput = document.getElementById('end-time');
-    const locationSelect = document.getElementById('locations');
+    const locationCheckboxes = document.querySelectorAll('input[name="locations"]');
 
     /** 🚨 Prevent Past Dates from Being Selected */
     function setMinDate() {
@@ -35,6 +35,13 @@ document.addEventListener('DOMContentLoaded', function () {
     emailInput.addEventListener('input', handleEmailValidation);
     emailInput.addEventListener('blur', handleEmailValidation);
 
+    /** Get Selected Locations */
+    function getSelectedLocations() {
+        return Array.from(locationCheckboxes)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.value);
+    }
+
     /** ❌ Prevent Overlapping and Duplicate Slots */
     function timeToMinutes(time) {
         const [hours, minutes] = time.split(":").map(Number);
@@ -46,10 +53,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const existingDate = slot.dataset.date;
             const existingStartTime = slot.dataset.startTime;
             const existingEndTime = slot.dataset.endTime;
-            const existingLocation = slot.dataset.locations;
-
+            const existingLocations = slot.dataset.locations.split(',');
+            
             if (existingDate !== newSlot.date) return false;
-            if (existingLocation !== newSlot.locations) return false;
+            
+            // Check if there's any overlap in locations
+            const hasLocationOverlap = newSlot.locations.some(location => 
+                existingLocations.includes(location)
+            );
+            if (!hasLocationOverlap) return false;
 
             const existingStart = timeToMinutes(existingStartTime);
             const existingEnd = timeToMinutes(existingEndTime);
@@ -77,6 +89,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
+        const selectedLocations = getSelectedLocations();
+        if (selectedLocations.length === 0) {
+            alert("Please select at least one location.");
+            return false;
+        }
+
         return true;
     }
 
@@ -84,25 +102,26 @@ document.addEventListener('DOMContentLoaded', function () {
     addSlotBtn.addEventListener('click', function () {
         if (!validateSlot()) return;
 
+        const selectedLocations = getSelectedLocations();
         const newSlot = {
             email: emailInput.value,
             date: dateInput.value,
             startTime: startTimeInput.value,
             endTime: endTimeInput.value,
-            locations: locationSelect.value
+            locations: selectedLocations
         };
 
         if (checkForOverlap(newSlot)) {
-            alert("You have already added an overlapping or duplicate time slot.");
+            alert("You have already added an overlapping or duplicate time slot for one or more selected locations.");
             return;
         }
 
         const li = document.createElement('li');
-        li.textContent = `${newSlot.date} | ${newSlot.startTime} - ${newSlot.endTime} | ${newSlot.locations}`;
+        li.textContent = `${newSlot.date} | ${newSlot.startTime} - ${newSlot.endTime} | ${newSlot.locations.join(', ')}`;
         li.dataset.date = newSlot.date;
         li.dataset.startTime = newSlot.startTime;
         li.dataset.endTime = newSlot.endTime;
-        li.dataset.locations = newSlot.locations;
+        li.dataset.locations = newSlot.locations.join(',');
 
         const removeBtn = document.createElement('button');
         removeBtn.textContent = "×";
@@ -140,13 +159,21 @@ document.addEventListener('DOMContentLoaded', function () {
     submitSlotsBtn.addEventListener('click', async function () {
         if (!validateSlot()) return;
 
-        const slots = Array.from(slotsList.children).map(slot => ({
-            email: emailInput.value,
-            date: slot.dataset.date,
-            startTime: slot.dataset.startTime,
-            endTime: slot.dataset.endTime,
-            locations: slot.dataset.locations
-        }));
+        const optOut1to1 = document.getElementById('opt-out-1to1').checked;
+const optOutRepeat = document.getElementById('opt-out-repeat').checked;
+const optOutSameSchool = document.getElementById('opt-out-same-school').checked;
+const onlyMatchSameSchool = document.getElementById('only-match-same-school').checked;
+const selectedExperiences = Array.from(document.querySelectorAll('input[name="experiences"]:checked'))
+    .map(checkbox => checkbox.value);
+
+const slots = Array.from(slotsList.children).map(slot => ({
+    email: emailInput.value,
+    date: slot.dataset.date,
+    startTime: slot.dataset.startTime,
+    endTime: slot.dataset.endTime,
+    locations: slot.dataset.locations.split(',')
+}));
+
 
         if (slots.length === 0) {
             alert('Please add at least one valid time slot.');
@@ -171,6 +198,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ 
                     email: emailInput.value, 
                     slots,
+                    optOut1to1,
+                    optOutRepeat,
+                    optOutSameSchool,
+                    onlyMatchSameSchool,
+                    experiences: selectedExperiences,
                     matchingPreference
                 })
             });
@@ -189,3 +221,4 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+

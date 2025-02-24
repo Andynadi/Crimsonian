@@ -151,3 +151,75 @@ footer {
     text-align: center;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
+
+/* --- ✅ FIXED LOCATION CHECKBOXES (New Style) ✅ --- */
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px; /* Adjust spacing between checkboxes */
+    padding: 10px 0;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Minimal space between checkbox and label */
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.checkbox-item:hover {
+    background-color: #f2f2f2;
+}
+
+.checkbox-item input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #c41e3a;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    background: white;
+}
+
+.checkbox-item input:checked {
+    background: #c41e3a;
+}
+
+.checkbox-item input:checked::before {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.checkbox-item label {
+    font-size: 14px;
+    cursor: pointer;
+}
+
+h3 {
+    margin-top: 30px; /* Increase top margin for spacing */
+}
+
+h3:first-of-type {
+    margin-top: 20px; /* Keep the first h3 slightly closer */
+}
+
+p {
+    margin-bottom: 15px; /* Add space below paragraphs */
+}
+.h4-warning {
+    color: #c41e3a; /* Harvard Crimson Red */
+    font-weight: bold;
+}
